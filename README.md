@@ -259,8 +259,6 @@ What the tests **cannot** tell you: how real models behave. That is what your ru
 - Voting over several answers is the idea of self-consistency (Wang et al., 2023), and ranking SQL or code by what it *executes to* has been studied before (for example Shi et al., 2022). Choosing to abstain follows the selective-prediction literature (El-Yaniv and Wiener, 2010; Geifman and El-Yaniv, 2017). **This project is not a new method.** It is a small, careful evaluation of a known idea.
 - Related research I was inspired by: Kulkarni et al., *LLM-Symbolic Integration for Robust Temporal Tabular Reasoning* (Findings of ACL 2025), where a model writes SQL over a table.
 
-This project was built with the help of an AI coding assistant (Claude). Read the code and run the tests before you trust it.
-
 ## License
 
 MIT
