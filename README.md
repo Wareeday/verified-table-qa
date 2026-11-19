@@ -2,13 +2,61 @@
 
 **Can a language model learn to say "I'm not sure" about its own SQL?**
 
-This is a small research project about *trusting* what a language model tells you. A model reads a question about a table, writes SQL, and we **run** that SQL. Then we ask: how do we know the answer is right? My answer is simple. We ask the model for the query three different ways, run all three, and only trust the answer when the attempts agree. When they don't, the system says *"I don't know"* instead of guessing.
+A model reads a question about a table and writes SQL. We run that SQL and ask how far the answer can be trusted. The system asks for **three queries from three different prompts**, executes all of them in a read-only SQLite sandbox, returns the **majority answer**, and **abstains** when too few queries agree or a symbolic sanity check fails. Every result is reported with bootstrap confidence intervals, paired tests and **coverage**, never accuracy alone.
 
-The project measures whether this actually helps, and how much, with proper confidence intervals instead of a single lucky number.
+> The method itself is not new: it combines self-consistency, execution-based selection and selective prediction. The value of the project is a careful, reproducible evaluation and an honest error analysis.
 
-I started it because of one question that I could not put down: *if an AI system can run a hundred experiments while I sleep, how do I know its results are real?* Tables and SQL are a good place to study that question, because a SQL query can be executed and checked by a computer.
+---
 
-> **Honest status.** The code is complete and tested (see "Tests" below), but I have not put any results in this repository yet. Run it, then add your own numbers. Never copy numbers from a "mock" run. The mock model is fake and exists only to test the code.
+## Results
+
+All numbers below are computed from the raw `predictions.jsonl` files in `results/`. Setup for every WikiTQ run: 100 questions from the WikiTableQuestions development split (seed 7, tables up to 60 rows and 12 columns), 3 queries per question, temperature 0, confidence threshold 0.66 (at least 2 of 3 queries agree). 95% bootstrap intervals in brackets.
+
+### Groq `gpt-oss-20b` vs Gemini 3.5 Flash-Lite on WikiTQ
+
+**Important:** the last 32 questions of the Groq run (questions 69 to 100) failed with `HTTP 401: Invalid API Key`, so the "as recorded" numbers compare a complete run with a broken one. The fair comparison is on the **68 shared questions with valid responses**.
+
+| 68 shared valid questions | Groq `gpt-oss-20b` | Gemini 3.5 Flash-Lite |
+|---|---|---|
+| One query (B) | 57.4% [45.6, 69.1] | 60.3% [48.5, 72.1] |
+| Majority vote of 3 (C) | 63.2% [51.5, 73.5] | 64.7% [52.9, 75.0] |
+| Vote minus one query | +5.9 [+1.5, +11.8] | +4.4 [0.0, +10.3] |
+| Vote + abstain: accuracy on answered | 75.0% [63.0, 86.3] | 71.7% [60.3, 82.5] |
+| Vote + abstain: coverage | 76.5% [66.2, 85.3] | 88.2% [80.9, 95.6] |
+| AUROC of the confidence score | 0.702 [0.571, 0.823] | 0.624 [0.515, 0.732] |
+| Queries that executed (of 204) | 175 (85.8%) | 203 (99.5%) |
+
+Paired difference Gemini minus Groq in voted accuracy: **+1.5 points, 95% CI [-8.8, +11.8], exact McNemar p = 1.0**. On these questions the two systems cannot be told apart.
+
+| As recorded (100 questions) | Groq `gpt-oss-20b` | Gemini 3.5 Flash-Lite |
+|---|---|---|
+| One query (B) | 39.0% [30.0, 49.0] | 59.0% [50.0, 68.0] |
+| Majority vote of 3 (C) | 43.0% [34.0, 53.0] | 62.0% [53.0, 71.0] |
+| Accuracy on answered / coverage | 75.0% / 52.0% | 68.6% / 86.0% |
+
+The 19-point gap (McNemar p = 0.001) is mostly caused by the 401 errors and says little about model ability.
+
+<p align="center">
+  <img src="results/wikitq_gemini/coverage_curve.png" width="46%" alt="Gemini accuracy vs coverage">
+  <img src="results/wikitq_groq/coverage_curve.png" width="46%" alt="Groq accuracy vs coverage">
+</p>
+
+### What the results show
+
+- **Voting helps a little and never hurt.** It corrected 3 to 4 questions per model and changed no correct answer into a wrong one. The Gemini interval touches 0, so this is suggestive, not conclusive.
+- **Agreement is informative.** On the shared questions, unanimous answers are right 70.9% (Gemini) and 73.8% (Groq) of the time; answers below the threshold only 12.5% and 25.0%.
+- **Agreement is not correctness.** Even unanimous answers are wrong about one time in four, and on **12 of the 18** questions that both models get wrong, they give the *same* wrong answer.
+- **Which model is better?** Gemini was the more *reliable system* (it always returned SQL), but the data do not show that it writes better SQL. `gpt-oss-20b` produced 24 replies without any SQL out of 204 requests, probably because its reasoning tokens used up the token limit. Gemini has higher coverage; Groq has slightly higher accuracy on the questions it answers.
+
+### Synthetic sanity benchmark (`mini`, 60 questions, Groq `gpt-oss-20b`)
+
+One query and the vote both score **100%** (Wilson 95% interval 94.0 to 100.0), coverage 100%. The benchmark is saturated, so it confirms that the pipeline works but cannot separate methods. The direct-reading baseline scored 36.7%, but **34 of its 60 answers were empty** (probably the 300-token limit), so that number is not valid evidence for or against SQL.
+
+### What went wrong in the failures
+
+Of Gemini's 41 single-query failures, a manual categorisation (see `results/wikitq_gemini/failures_to_audit.csv` and the technical report) gives: entity or value linking 7, misread question semantics 7, ordinal words such as "first" or "after" 4, messy numbers or dates 4, evaluation artefacts 4 (for example "4" against a gold answer of "4 years"), wrong column 3, "Total" row used as data 3, ambiguous questions or questionable gold answers 3, ties or incomplete sets 2, off-by-one durations 2, over-complex SQL 2. SQL syntax errors are almost absent (3 of 300 queries).
+
+Wall-clock time and token usage were **not recorded**, so no speed comparison is available yet.
 
 ---
 
@@ -16,248 +64,119 @@ I started it because of one question that I could not put down: *if an AI system
 
 ```
  question + table schema
-          │
-          ├─► ask the model for 3 SQL queries (3 different prompts)
-          ├─► run every query on a read-only SQLite copy of the table
-          ├─► compare the answers - the majority answer wins
-          └─► confidence = (queries that agree) / 3,  halved if a sanity check fails
-                    │
-        confidence >= threshold ?  ──► yes: give the answer
-                                   └─► no : abstain ("I don't know")
+          |
+          +--> ask the model for 3 SQL queries (3 different prompts)
+          +--> run every query on a read-only SQLite copy of the table
+          +--> compare the answers; the majority answer wins
+          `--> confidence = (queries that agree) / 3, halved if a sanity check fails
+                    |
+         confidence >= 0.66 ?  --yes--> answer
+                              `--no---> abstain ("I don't know")
 ```
 
-**The three prompts** (`vtqa/prompts.py`): a plain one, one that asks the model to plan first, and one with a short list of SQL rules.
-
-**The sanity checks** (`vtqa/verify.py`) need no extra model call:
-
-| Check | What it catches |
-|---|---|
-| `type_mismatch` | a "how many..." question must return exactly one number |
-| `ungrounded` | a text answer must appear in a table cell, so it was not made up |
-| empty / null result | a query that returns nothing cannot vote |
-
-A query that crashes still counts in the denominator. That is on purpose: a model that often writes broken SQL should *lose* confidence.
-
-### What gets compared
-
-| | Method | Answers every question? |
+| Method | Description | Answers every question? |
 |---|---|---|
-| A | **Direct**: show the model the whole table, ask for the answer | yes |
-| B | **SQL, one query**: schema only, one query, run it | yes |
-| C | **SQL + majority vote** of 3 queries | yes |
-| D | **SQL + vote + abstain** (this project's main idea) | only when confident |
+| A | **Direct**: the model reads the whole table and answers | yes |
+| B | **One query**: schema only, one SQL query | yes |
+| C | **Vote**: majority answer of 3 queries | yes |
+| D | **Vote + abstain**: answer only if confident | only when confident |
 
-Comparing B with C tells you if *voting* helps. Looking at D tells you if *abstaining* helps. They are separate questions, and a careful report keeps them separate.
+Sanity checks (`vtqa/verify.py`): a "how many" question must return exactly one number (`type_mismatch`); a text answer must occur in a table cell (`ungrounded`); an empty or null result cannot vote. A query that crashes still counts in the denominator, so a model that often writes broken SQL loses confidence.
 
 ---
 
-## Quick start (2 minutes, no model needed)
-
-You need Python 3.9 or newer.
+## Quick start
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Wareeday/verified-table-qa.git
 cd verified-table-qa
-
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-python tests/test_all.py           # should end with: ALL TESTS PASSED
-python run.py --dataset mini --backend mock --n 30 --out results/demo_mock
+python tests/test_all.py             # 11 offline tests, ends with: ALL TESTS PASSED
+python run.py --dataset mini --backend mock --n 30 --out results/demo_mock   # fake model, code test only
 ```
 
-Open `results/demo_mock/report.md`. You will see a big **MOCK RUN** warning. That is correct: the mock model is a fake that breaks the right SQL on purpose. It proves the code works. It says nothing about real models.
+A mock run prints a **MOCK RUN** warning. Its numbers are meaningless and must never be quoted.
 
----
-
-## Run it with a real model (free)
-
-You do not need to pay anything. Pick one option.
-
-### Option 1: Ollama on your own computer (free, no limits)
-
-1. Install Ollama from https://ollama.com
-2. Download a model. This one is good at SQL and needs about 5 GB:
-   ```bash
-   ollama pull qwen2.5-coder:7b
-   ```
-   If your computer has less than 8 GB of RAM, try a smaller one, for example `qwen2.5-coder:3b`.
-3. Run (Ollama must be running in the background):
-   ```bash
-   python run.py --dataset mini --n 60 --preset ollama --model qwen2.5-coder:7b --out results/mini_qwen7b
-   ```
-
-A note about memory: the "direct" baseline sends a whole table to the model. If your Ollama version uses a small context window, that baseline can look unfairly bad. Raise the context length (check the Ollama docs for your version) or add `--skip-direct`.
-
-### Option 2: a free API tier (Groq, Gemini, OpenRouter)
-
-1. Make a free account with the provider and create an API key.
-2. Put the key in an environment variable. **Never put a key inside the code or on GitHub.**
-   ```bash
-   export GROQ_API_KEY="paste-your-key"          # Mac / Linux
-   $env:GROQ_API_KEY="paste-your-key"            # Windows PowerShell
-   ```
-3. Run it. Use a model name from your provider's model list (names change over time) and be gentle with the rate limit:
-   ```bash
-   python run.py --dataset mini --n 60 --preset groq --model <model-name> --sleep 2 --out results/mini_groq
-   ```
-
-Presets: `ollama`, `groq`, `gemini`, `openrouter`. They set the web address and the name of the key variable (`GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`). Free limits change, so check the provider's page. Any other service that speaks the "OpenAI chat completions" format works too, with `--base-url`.
-
-On Google Colab, use Option 2.
-
-### What a run costs
-
-For `n` questions the code makes about `n x 4` model calls (3 SQL queries + 1 direct answer). Every reply is saved in `llm_cache.jsonl`, so if a run stops, start the same command again and it continues where it stopped, without paying twice.
-
----
-
-## Suggested order for your first real results
-
-1. **Sanity check on the synthetic data** (`--dataset mini --n 60`). A decent model should do well here. If it does not, something is wrong with your setup, not with science.
-2. **Real data** (`--dataset wikitq --n 100`). WikiTableQuestions has real Wikipedia tables and human-written questions, so it is much harder. This is the run to report.
-3. If you have time, a **second, different model**. Comparing a small and a larger model is more interesting than one number.
-
-Before you press enter on step 2, open `docs/EXPERIMENT_PLAN.md`, fill it in, and commit it. Writing your hypotheses first keeps you honest.
-
-The real-data command:
+### Reproduce the real runs
 
 ```bash
-python run.py --dataset wikitq --n 100 --preset ollama --model qwen2.5-coder:7b --out results/wikitq_qwen7b
+export GROQ_API_KEY="..."      # Windows PowerShell: $env:GROQ_API_KEY="..."
+export GEMINI_API_KEY="..."
+
+python run.py --dataset wikitq --n 100 --preset groq   --model openai/gpt-oss-20b       --skip-direct --out results/wikitq_groq
+python run.py --dataset wikitq --n 100 --preset gemini --model gemini-3.5-flash-lite     --skip-direct --out results/wikitq_gemini
+python run.py --dataset mini   --n 60  --preset groq   --model openai/gpt-oss-20b                      --out results/mini_groq
 ```
 
-The first run downloads the questions and tables from the public WikiTableQuestions GitHub page (nothing is stored in this repo). I keep only tables with at most 60 rows and 12 columns, so the direct baseline can see the whole table. Change this with `--max-table-rows`.
+Never put a key in the code or in Git. Free-tier limits change, so add `--sleep 2` if you hit rate limits. For a local model, install [Ollama](https://ollama.com), pull a model and use `--preset ollama --model <name>`. Any server that speaks the OpenAI chat-completions format works with `--base-url`.
 
----
+Rebuild a report (for example with another threshold): `python -m vtqa.report results/wikitq_gemini 0.99`.
 
-## Reading your report
-
-Every run writes into its `--out` folder:
-
-| File | What it is |
-|---|---|
-| `report.md` | the readable summary |
-| `coverage_curve.png` | accuracy against coverage |
-| `predictions.jsonl` | every question, every query, every answer (the raw evidence) |
-| `failures_to_audit.csv` | the wrong answers, ready for you to label by hand |
-| `summary.json` | all numbers, for your own plots |
-| `meta.json` | model, settings, date |
-
-In the report:
-
-- **Accuracy and 95% CI.** The interval comes from bootstrapping the questions. With 100 questions it is wide. That is normal. Quote it.
-- **Paired differences.** "Voting vs one query" is computed on the *same* questions. If its interval includes 0, you cannot claim a difference.
-- **Coverage.** The share of questions the system actually answered. **Always quote accuracy together with coverage.** Method D looks great if it only answers the easy ones, which is exactly why you report both.
-- **AUROC.** If you pick one right answer and one wrong answer at random, how often does the right one have the higher confidence? 0.50 = the score is useless, 1.00 = perfect.
-- **Why queries failed.** First-pass labels made by a few simple rules.
-
-### The manual error audit (do this, it is the best part)
-
-Open `failures_to_audit.csv`. For about 30 wrong answers, read the question, the gold answer and the model's SQL, then write *why* it failed in the `your_label` column. Typical labels: wrong column, wrong filter value, wrong aggregation, misread the question, ambiguous question, bad gold answer. Then count them. A hand-made list of failure types, from real examples, is worth more than any single accuracy number.
-
----
-
-## All options
+### Main options
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--dataset` | `mini` | `mini` (synthetic, offline) or `wikitq` (real) |
-| `--n` | 60 | number of questions |
-| `--seed` | 7 | which questions are picked |
-| `--backend` | `openai` | `openai` = any compatible server, `mock` = fake model for testing |
-| `--preset` | none | `ollama`, `groq`, `gemini`, `openrouter` |
-| `--base-url`, `--model`, `--api-key-env` | none | for any other server |
-| `--k` | 3 | queries per question (more than 3 adds repeats at temperature 0.7) |
-| `--tau` | 0.66 | answer only if confidence is at least this; 0.66 means "2 of 3 agree". **Choose it before you look at results.** |
-| `--no-samples` | off | show the model the schema only, without example rows |
-| `--skip-direct` | off | skip baseline A to save calls |
-| `--max-table-rows` | 60 | wikitq: skip longer tables |
+| `--dataset` | `mini` | `mini` (synthetic) or `wikitq` (real) |
+| `--n`, `--seed` | 60, 7 | number of questions, sampling seed |
+| `--preset` / `--base-url`, `--model` | none | `ollama`, `groq`, `gemini`, `openrouter` or your own server |
+| `--k`, `--tau` | 3, 0.66 | queries per question, confidence threshold (choose before looking) |
+| `--skip-direct` | off | skip the direct baseline to save calls |
+| `--max-table-rows` | 60 | WikiTQ: skip longer tables |
 | `--sleep` | 0 | seconds to wait after each call |
 | `--out` | `results/run1` | output folder |
 
-To rebuild a report with a different threshold: `python -m vtqa.report results/my_run 0.99`
+### What a run writes
 
----
-
-## What is where
-
-```
-run.py                  command-line entry point
-vtqa/
-  prompts.py            every prompt (change them here)
-  llm.py                model client, disk cache, and the fake mock model
-  db.py                 SQLite loading, schema text, safe read-only execution
-  methods.py            the direct baseline and the SQL queries
-  verify.py             voting, sanity checks, confidence
-  scoring.py            how answers are normalised and compared
-  taxonomy.py           automatic first-pass failure labels
-  stats.py              bootstrap confidence intervals, AUROC
-  report.py             report, plot, audit sheet
-  data_mini.py          synthetic company database + questions
-  data_wikitq.py        WikiTableQuestions loader
-tests/test_all.py       tests (no model, no internet needed)
-docs/EXPERIMENT_PLAN.md fill in and commit before your real run
-```
-
----
-
-## Tests
-
-`python tests/test_all.py` checks, among other things, that:
-
-- SQL safety works: only `SELECT` runs, writes are blocked, and runaway queries are stopped after 3 seconds
-- the synthetic questions are reproducible and their gold SQL gives the gold answer
-- the verifier votes, flags and breaks ties as documented
-- a perfect model gets 100% with full coverage, so the verifier does not raise false alarms
-- the HTTP client works against a local fake server, including retry after a rate-limit error
-- an interrupted run resumes without calling the model again
-
-`VTQA_ONLINE=1 python tests/test_all.py` also checks the real WikiTableQuestions download.
-
-What the tests **cannot** tell you: how real models behave. That is what your run is for.
-
----
-
-## Limits you should know about (and write down)
-
-- **Answers are compared as sets** of normalised values. Order and duplicates are ignored, numbers are rounded to 2 decimals, and "which of these, in order" questions are not scored strictly.
-- **WikiTableQuestions is filtered** to small tables, and it is public, so a model may have seen it during training.
-- **The three prompts are not independent samples.** Their agreement is a useful signal, but it is weaker than three independent draws. Models can also be consistently wrong.
-- **Column names are cleaned** (`"Avg. Attendance"` becomes `avg_attendance`) so SQLite accepts them. The original headers are shown to the model as a note.
-- **A small number of questions means wide intervals.** Do not call a result a "discovery" on 100 questions.
-- **The prompts were not tuned.** I wrote them once. A model-specific prompt would probably score higher.
-- **The mini dataset is synthetic.** It is a sanity check, not a benchmark.
-
----
-
-## Troubleshooting
-
-| Problem | Try this |
+| File | Content |
 |---|---|
-| `Could not talk to the model` | Is Ollama running? Is the model name exactly right (`ollama list`)? Is the key variable set in *this* terminal? |
-| Every query is empty or broken | The model may be too small. Try a bigger one, or look at a few rows of `predictions.jsonl`. |
-| `HTTP 429` or very slow | You hit a free-tier limit. Add `--sleep 3` and run again; finished questions are skipped. |
-| The direct baseline looks terrible | Probably a small context window. See the Ollama note above or use `--skip-direct`. |
-| wikitq download fails | Check your internet. Downloaded files are cached in `data_cache/`. |
-| Want a clean start | Delete the `--out` folder. |
+| `report.md`, `coverage_curve.png` | readable summary and the accuracy-coverage plot |
+| `predictions.jsonl` | every question, query and answer (the raw evidence) |
+| `failures_to_audit.csv` | wrong answers with an empty `your_label` column for manual error analysis |
+| `summary.json`, `meta.json` | all numbers; model and settings |
 
----
+## Repository layout
 
-## Ideas to extend it
+```
+run.py                   command-line entry point
+vtqa/                    prompts, LLM client, SQL sandbox, verifier, scoring, statistics, report, loaders
+tests/test_all.py        offline tests
+docs/EXPERIMENT_PLAN.md  hypotheses and settings
+results/                 mini_groq, wikitq_groq, wikitq_gemini, run1 (partial)
+```
 
-- Add the **Spider** benchmark (multi-table databases). Only `data_*.py` needs a new loader.
-- Replace the confidence rule with a **small learned classifier** and compare it with simple voting.
-- Add a second, independent way of computing the answer (for example pandas) as a stronger verifier.
-- Try a harder setting: tables with dates and time arithmetic, where small models break often.
+## Known issues and roadmap
 
----
+Found during a review of the code and results; none of them has been fixed yet.
 
-## References and credits
+- [ ] **Failed requests are treated as finished.** A re-run skips questions that already have a record, even when every request failed (as with the Groq HTTP 401 questions), so they are never retried. The run should also stop after repeated 401/403 errors.
+- [ ] **Re-run Groq questions 69-100** after the fix above, then update the tables.
+- [ ] **Token limits are fixed** (600 for SQL, 300 for direct answers) and not configurable. Reasoning models need more; add `--max-tokens` and store the raw reply and finish reason.
+- [ ] **Re-run the direct baseline** on `mini` and on WikiTQ with a larger limit.
+- [ ] **Wilson intervals** for proportions (bootstrap intervals collapse to [100, 100]).
+- [ ] **More tolerant answer matching** (stray backslashes, units such as "4 years"), reported next to the strict score.
+- [ ] **Record time and tokens** (`finished`, seconds per question, token counts) in `meta.json`.
+- [ ] Fill in `failures_to_audit.csv` by hand (`your_label`) and complete `docs/EXPERIMENT_PLAN.md`.
+- [ ] Packaging: `pyproject.toml` requires Python >= 3.14, but the code runs on older versions; remove the stub `src/verified_table_qa` or package `vtqa` properly.
+- [ ] `results/run1` is an interrupted run (22 questions, no report); rename it or remove it.
 
-- WikiTableQuestions: Pasupat and Liang, *Compositional Semantic Parsing on Semi-Structured Tables*, ACL 2015. https://github.com/ppasupat/WikiTableQuestions . Please read the dataset page for its terms of use.
-- Voting over several answers is the idea of self-consistency (Wang et al., 2023), and ranking SQL or code by what it *executes to* has been studied before (for example Shi et al., 2022). Choosing to abstain follows the selective-prediction literature (El-Yaniv and Wiener, 2010; Geifman and El-Yaniv, 2017). **This project is not a new method.** It is a small, careful evaluation of a known idea.
-- Related research I was inspired by: Kulkarni et al., *LLM-Symbolic Integration for Robust Temporal Tabular Reasoning* (Findings of ACL 2025), where a model writes SQL over a table.
+## Limitations
+
+Answers are compared as sets after simple normalisation. WikiTQ is public and filtered to small tables. The three prompts are not independent samples, and models can be consistently wrong. With 100 questions the intervals are wide, so small differences cannot be resolved. The mini benchmark is synthetic.
+
+## Technical report
+
+A full report (method, setup, tables, error analysis, references) is in `docs/technical_report.tex`.
+
+## References
+
+- P. Pasupat and P. Liang. *Compositional Semantic Parsing on Semi-Structured Tables.* ACL 2015.
+- X. Wang et al. *Self-Consistency Improves Chain of Thought Reasoning in Language Models.* ICLR 2023.
+- F. Shi et al. *Natural Language to Code Translation with Execution.* EMNLP 2022.
+- R. El-Yaniv and Y. Wiener. *On the Foundations of Noise-free Selective Classification.* JMLR 2010.
+- A. Kulkarni et al. *LLM-Symbolic Integration for Robust Temporal Tabular Reasoning.* Findings of ACL 2025.
 
 ## License
 
