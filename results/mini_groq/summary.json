@@ -1,0 +1,82 @@
+{
+  "n": 60,
+  "tau": 0.66,
+  "single": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "vote": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "direct": [
+    0.36666666666666664,
+    0.25,
+    0.48333333333333334
+  ],
+  "diff_single_minus_direct": [
+    0.6333333333333333,
+    0.5166666666666667,
+    0.75
+  ],
+  "diff_vote_minus_single": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "selective_acc": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "coverage": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "rejected_acc": NaN,
+  "auroc": [
+    NaN,
+    NaN,
+    NaN
+  ],
+  "curve": [
+    {
+      "tau": 1.0,
+      "coverage": 0.9666666666666667,
+      "accuracy": 1.0
+    },
+    {
+      "tau": 0.6667,
+      "coverage": 1.0,
+      "accuracy": 1.0
+    }
+  ],
+  "difficulty": {
+    "easy": {
+      "n": 19,
+      "single": 1.0,
+      "vote": 1.0,
+      "selective_acc": 1.0,
+      "coverage": 1.0
+    },
+    "hard": {
+      "n": 14,
+      "single": 1.0,
+      "vote": 1.0,
+      "selective_acc": 1.0,
+      "coverage": 1.0
+    },
+    "medium": {
+      "n": 27,
+      "single": 1.0,
+      "vote": 1.0,
+      "selective_acc": 1.0,
+      "coverage": 1.0
+    }
+  },
+  "failure_labels": {},
+  "flag_counts": {}
+}

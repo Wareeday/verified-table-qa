@@ -1,0 +1,133 @@
+id,question,gold_answer,predicted_sql,predicted_answer,auto_label,gold_sql,your_label,your_notes
+nt-1176,how many people didn't name their native language?,27,"SELECT SUM(CAST(REPLACE(number, ' ', '') AS INTEGER)) AS total_not_named
+FROM t
+WHERE language IS NULL OR language = '';",null,empty_result,,,
+nt-5291,what is the total number of members whose term expires in 1989?,9,SELECT COUNT(*) FROM t WHERE term_expires = 1989;,18,wrong_value,,,
+nt-4278,what song earned the most points?,yavo yom,"SELECT song
+FROM t
+WHERE points = (SELECT MAX(points) FROM t);",\yavo yom\,wrong_value,,,
+nt-7409,who was the last driver from the uk to actually finish the 56 laps?,david coulthard,,,no_sql_found,,,
+nt-283,how long has internacional de madrid cf been playing in the 3ª division?,3,"SELECT COUNT(DISTINCT season) AS years_in_3ª
+FROM t
+WHERE division LIKE '3ª%';",4,wrong_value,,,
+nt-11768,how many consecutive notes are there?,12,"WITH grp AS (
+  SELECT
+    rank,
+    notes,
+    SUM(CASE WHEN notes IS NULL THEN 1 ELSE 0 END) OVER (ORDER BY rank) AS grp_id
+  FROM t
+)
+SELECT MAX(cnt) AS consecutive_notes
+FROM (
+  SELECT grp_id, COUNT(*) AS cnt
+  FROM grp
+  WHERE notes IS NOT NULL
+  GROUP BY grp_id
+);",18,wrong_value,,,
+nt-7156,"based on sales figures, what auryn album is the most popular?",endless road 7058,,,no_sql_found,,,
+nt-1167,in which city did the most operettas premiere?,vienna,"SELECT substr(place_theatre,",,syntax_error,,,
+nt-9100,how many affiliates does galavision have?,1,"SELECT SUM(affiliates) AS affiliates
+FROM t
+WHERE owner = 'Galavision';",null,empty_result,,,
+nt-3413,are any of the lanes in consecutive order?,no,"SELECT CASE
+         WHEN EXISTS (
+           SELECT 1
+           FROM t AS a
+           JOIN t AS b ON a.lane + 1 = b.lane
+         ) THEN 'Yes'
+         ELSE 'No'
+       END AS answer;",yes,wrong_value,,,
+nt-2074,how long did sydney greenstreet's acting career last?,9 years,"SELECT MAX(year) - MIN(year) + 1 AS career_length
+FROM t
+WHERE role LIKE '%Sydney Greenstreet%';",null,empty_result,,,
+nt-13518,which country conceded the least goals?,finland,"SELECT team
+FROM t
+ORDER BY CAST(SUBSTR(difference, INSTR(difference, '–') + 1) AS INTEGER)
+LIMIT 1;",canada,wrong_value,,,
+nt-13286,what is the difference in finishing times for the men's and women's bupa great south run finish for 2013?,5:50,"SELECT
+  (CAST(substr(time_m_s,1,2) AS INTEGER)*60 + CAST(substr(time_m_s,4,2) AS INTEGER))
+  - (CAST(substr(time_m_s_1,1,2) AS INTEGER)*60 + CAST(substr(time_m_s_1,4,2) AS INTEGER))
+  AS diff_seconds
+FROM t
+WHERE year = 2013;",-350,wrong_value,,,
+nt-11054,who was the top finisher that drove a cooper-climax?,tony maggs,"SELECT driver
+FROM t
+WHERE constructor LIKE '%Cooper-Climax%'
+ORDER BY CAST(pos AS INTEGER) ASC
+LIMIT 1;",jo bonnier,wrong_value,,,
+nt-8912,which region has more than one format?,united states,"SELECT region
+FROM t
+GROUP BY region
+HAVING COUNT(DISTINCT format) > 1;",the netherlands | united kingdom | united states | worldwide,wrong_number_of_values,,,
+nt-9259,how many years was it before the first partly free status?,18,"SELECT COUNT(*) AS years_before_partly_free
+FROM t
+WHERE year < (SELECT MIN(year) FROM t WHERE status = 'Partly Free');",19,wrong_value,,,
+nt-1336,who finished after claudia poll?,vanessa garcía,"SELECT swimmer
+FROM t
+WHERE CAST(rank AS INTEGER) > 1
+ORDER BY CAST(rank AS INTEGER);",vanessa garcía | arlene semeco | heysi villarreal | maríana álvarado | carolina moreno | isabella tafur | ximena maria vilár | nikia hillarie | sharon fajardo | maria álvarez | alia atkinson | alexis jordan | sharntelle mclean | jennifer powell | nishani cicilson | sade daal | dalia tórrez,wrong_number_of_values,,,
+nt-1856,"which had more ger numbers, 1898 or 1893?",1898,"WITH counts AS (
+  SELECT year,
+    SUM(
+      CASE
+        WHEN instr(ger_nos, '–') = 0 THEN 1
+        ELSE CAST(substr(ger_nos, instr(ger_nos, '–')+1) AS INTEGER) -
+             CAST(substr(ger_nos, 1, instr(ger_nos, '–')-",,syntax_error,,,
+nt-1539,how do you say 'i love you' in afrikaans?,ek is lief vir jou.,"SELECT afrikaans
+FROM t
+WHERE english LIKE '%I love you%';",ek is lief vir jou. less common: ek het jou lief.,wrong_value,,,
+nt-6001,how many times did korzeniowski finish above fourth place?,13,,,no_sql_found,,,
+nt-12007,how many more points did erik zabel score than franciso ventoso?,71,,,no_sql_found,,,
+nt-6985,"other than mauna kea, name a place in hawaii.",makalawena marsh,"SELECT name
+FROM t
+WHERE name <> 'Mauna Kea'
+LIMIT 1;",diamond head,wrong_value,,,
+nt-5889,"who was eliminated first, nikki dinki or viet pham?",viet pham,,,no_sql_found,,,
+nt-11951,what is the difference between suicides in poland and sudetendeutsch?,6919,"SELECT poland - sudetendeutsch AS difference
+FROM t
+WHERE description = 'Suicides';",-3401,wrong_value,,,
+nt-8057,"what was the number of weeks that julie covington's single "" don't cry for me argentinia,"" was at number 1 in 1977?",7,"SELECT weeks_at_no_1
+FROM t
+WHERE artist = 'Julie Covington'
+  AND title = 'Don''t Cry for Me Argentina';",,empty_result,,,
+nt-4761,"in list of venues, how many years was beijing above moscow (1st venue is above 2nd venue, etc)?",3,,,no_sql_found,,,
+nt-11721,which province consumes the least amount of spirits?,quebec,"SELECT unnamed_0
+FROM t
+ORDER BY CAST(spirits AS REAL) ASC
+LIMIT 1;",nunavut,wrong_value,,,
+nt-7669,what is the only location with a coordination of 60°16&#8242;31.65&#8243;n 30°32&#8242;45.66&#8243;e / 60.2754583°n 30.5460167°e?,"lekhtusi radar station, leningrad oblast","SELECT location
+FROM t
+WHERE coordinates = '60°16&#8242;31.65&#8243;n 30°32&#8242;45.66&#8243;e / 60.2754583°n 30.5460167°e';",,empty_result,,,
+nt-683,what is the total of deaths in internment camps and during the wartime flight?,173805,,,no_sql_found,,,
+nt-4281,what is the total number of components on the chart?,18,,,llm_error,,,
+nt-13573,the last team to win the west?,1. ec senden,,,llm_error,,,
+nt-7179,which countries have the same number of silver medals in the asian youth games as north korea?,vietnam (vie) | malaysia (mas),,,llm_error,,,
+nt-1636,which country had the highest number of medals?,russia,,,llm_error,,,
+nt-5425,what is the name of the swara that comes after panchama?,shuddha dhaivata,,,llm_error,,,
+nt-11220,how many of these games occurred before 17 february 1976?,7,,,llm_error,,,
+nt-5737,how long was woof the dog sold before it was retired?,4 years,,,llm_error,,,
+nt-657,how long was the teams longest losing streak?,5 games,,,llm_error,,,
+nt-11222,in what year did england get the top achievment in the 200 meter?,1997,,,llm_error,,,
+nt-11390,what was the next most commonly spoken language in poland after russian?,german,,,llm_error,,,
+nt-5096,what swara is above shatshruti dhaivata?,shuddha nishada,,,llm_error,,,
+nt-4849,how many drivers received points from the race?,8,,,llm_error,,,
+nt-3275,what was the first marathon juma ikangaa won?,1982 african championships,,,llm_error,,,
+nt-5145,what party is listed previous to the new renaissance party?,new party daichi - true democrats,,,llm_error,,,
+nt-12256,which language did only .42% of people in the imperial census of 1897 speak in the p&#322;ock governorate?,ukrainian,,,llm_error,,,
+nt-534,what province is the town of temagami?,ontario,,,llm_error,,,
+nt-13934,which countries won at least 3 silver medals?,united states,,,llm_error,,,
+nt-10056,"on game days, which line do you want to use?",s castro shuttle,,,llm_error,,,
+nt-2993,how many seasons are shown in this chart?,17,,,llm_error,,,
+nt-12495,what was the number of cars built by american car company?,4,,,llm_error,,,
+nt-2529,fort gratiot lighthouse and fort st. joseph are located in what city?,port huron,,,llm_error,,,
+nt-913,number of losses,5,,,llm_error,,,
+nt-8971,"latin title of the encyclical before the encyclical with the subject ""on the church in bavaria""",incredibili,,,llm_error,,,
+nt-7595,what was the average attendance in 2008?,10031,,,llm_error,,,
+nt-4585,how many mills were built or first mentioned after 1800?,8,,,llm_error,,,
+nt-5176,what are the total number of landmarks located in maui?,3,,,llm_error,,,
+nt-4392,kode-tv and wsil-tv both are a part of which network?,abc,,,llm_error,,,
+nt-12349,what is the least total on the list?,9,,,llm_error,,,
+nt-10176,which players only scored one goal?,serginho greene | yordan miliev | ivo ivanov,,,llm_error,,,
+nt-13822,what country has won no silver medals?,maldives,,,llm_error,,,
+nt-14080,when did the first solar saros with a magnitude of greater than 1.00 occur?,"march 5, 2668",,,llm_error,,,
+nt-3878,what is the total number of suture materials that have a mono-filament structure?,3,,,llm_error,,,

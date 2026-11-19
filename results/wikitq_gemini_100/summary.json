@@ -1,0 +1,73 @@
+{
+  "n": 100,
+  "tau": 0.66,
+  "single": [
+    0.59,
+    0.5,
+    0.68
+  ],
+  "vote": [
+    0.62,
+    0.53,
+    0.71
+  ],
+  "diff_vote_minus_single": [
+    0.03,
+    0.0,
+    0.07
+  ],
+  "selective_acc": [
+    0.686046511627907,
+    0.5869377811094453,
+    0.7790697674418605
+  ],
+  "coverage": [
+    0.86,
+    0.79,
+    0.93
+  ],
+  "rejected_acc": 0.21428571428571427,
+  "auroc": [
+    0.6752971137521222,
+    0.5832260026661275,
+    0.7619394531249999
+  ],
+  "curve": [
+    {
+      "tau": 1.0,
+      "coverage": 0.73,
+      "accuracy": 0.726027397260274
+    },
+    {
+      "tau": 0.6667,
+      "coverage": 0.86,
+      "accuracy": 0.686046511627907
+    },
+    {
+      "tau": 0.5,
+      "coverage": 0.91,
+      "accuracy": 0.6593406593406593
+    },
+    {
+      "tau": 0.3333,
+      "coverage": 0.96,
+      "accuracy": 0.6458333333333334
+    },
+    {
+      "tau": 0.0,
+      "coverage": 1.0,
+      "accuracy": 0.62
+    }
+  ],
+  "difficulty": {},
+  "failure_labels": {
+    "empty_result": 7,
+    "wrong_value": 27,
+    "wrong_number_of_values": 7
+  },
+  "flag_counts": {
+    "no_valid_query": 4,
+    "type_mismatch": 4,
+    "ungrounded": 1
+  }
+}

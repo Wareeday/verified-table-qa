@@ -1,0 +1,80 @@
+id,question,gold_answer,predicted_sql,predicted_answer,auto_label,gold_sql,your_label,your_notes
+nt-1176,how many people didn't name their native language?,27,SELECT number FROM t WHERE language = 'None',,empty_result,,,
+nt-5291,what is the total number of members whose term expires in 1989?,9,SELECT count(*) FROM t WHERE term_expires = 1989,18,wrong_value,,,
+nt-4278,what song earned the most points?,yavo yom,SELECT song FROM t ORDER BY points DESC LIMIT 1,\yavo yom\,wrong_value,,,
+nt-7409,who was the last driver from the uk to actually finish the 56 laps?,david coulthard,SELECT driver FROM t WHERE laps = 56 AND time_retired NOT LIKE '%+%:%' AND time_retired NOT LIKE '%Lap%' AND time_retired NOT LIKE '%DNF%' AND time_retired NOT LIKE '%Accident%' AND time_retired NOT LIKE '%Engine%' AND time_retired NOT LIKE '%Gearbox%' AND (driver = 'Jenson Button' OR driver = 'David Coulthard' OR driver = 'Lewis Hamilton' OR driver = 'Justin Wilson' OR driver = 'Ralph Firman' OR driver = 'Allan McNish' OR driver = 'Eddie Irvine' OR driver = 'Mark Blundell' OR driver = 'Martin Brundle' OR driver = 'Johnny Herbert' OR driver = 'Damon Hill' OR driver = 'Nigel Mansell' OR driver = 'Derek Warwick' OR driver = 'Jonathan Palmer' OR driver = 'Martin Donnelly' OR driver = 'Julian Bailey' OR driver = 'Eddie Cheever' OR driver = 'Jolyon Palmer' OR driver = 'Lando Norris' OR driver = 'George Russell' OR driver = 'Alexander Albon' OR driver = 'Paul di Resta' OR driver = 'Will Stevens' OR driver = 'Max Chilton') ORDER BY no DESC LIMIT 1;,,empty_result,,,
+nt-169,which schools have the largest number of shared titles?,royal belfast academical institution | campbell college,SELECT school FROM t ORDER BY shared_titles DESC LIMIT 1,royal belfast academical institution,wrong_number_of_values,,,
+nt-283,how long has internacional de madrid cf been playing in the 3ª division?,3,SELECT count(season) FROM t WHERE division = '3ª Division',0,wrong_value,,,
+nt-12596,tell me the number of versions that are scrapped.,1,SELECT count(*) FROM t WHERE comments LIKE '%scrapped%',0,wrong_value,,,
+nt-4309,how tall is it to the top of the ids tower in feet?,792,SELECT height_ft_m FROM t WHERE name = 'IDS Center';,,empty_result,,,
+nt-11768,how many consecutive notes are there?,12,SELECT count(notes) FROM t,18,wrong_value,,,
+nt-13483,which is the first team from the chart,greystones,SELECT team FROM t ORDER BY years_won ASC LIMIT 1,dundalk gaels,wrong_value,,,
+nt-1167,in which city did the most operettas premiere?,vienna,"SELECT SUBSTR(place_theatre, 1, INSTR(place_theatre, ',') - 1) 
+FROM t 
+WHERE genre LIKE '%operetta%' 
+GROUP BY SUBSTR(place_theatre, 1, INSTR(place_theatre, ',') - 1) 
+ORDER BY COUNT(*) DESC 
+LIMIT 1;",,empty_result,,,
+nt-9100,how many affiliates does galavision have?,1,SELECT affiliates FROM t WHERE network_name = 'Galavision',,empty_result,,,
+nt-3413,are any of the lanes in consecutive order?,no,"SELECT 'Yes'
+FROM t AS t1
+JOIN t AS t2 ON ABS(t1.lane - t2.lane) = 1.0 AND t1.name != t2.name
+LIMIT 1;",yes,wrong_value,,,
+nt-2074,how long did sydney greenstreet's acting career last?,9 years,SELECT MAX(year) - MIN(year) FROM t;,8,wrong_value,,,
+nt-13518,which country conceded the least goals?,finland,"SELECT team FROM t ORDER BY CAST(SUBSTR(difference, INSTR(difference, '–') + 1) AS INTEGER) ASC LIMIT 1;",canada,wrong_value,,,
+nt-13286,what is the difference in finishing times for the men's and women's bupa great south run finish for 2013?,5:50,"SELECT time_m_s, time_m_s_1 FROM t WHERE year = 2013",48:03 | 53:53,wrong_number_of_values,,,
+nt-178,which province is the top consumer of wine?,yukon,SELECT unnamed_0 FROM t ORDER BY CAST(rank AS INTEGER) ASC LIMIT 1,nunavut,wrong_value,,,
+nt-5244,how many countries have one more than 10 gold medals?,3,SELECT count(*) FROM t WHERE gold = 11;,0,wrong_value,,,
+nt-11054,who was the top finisher that drove a cooper-climax?,tony maggs,SELECT driver FROM t WHERE constructor = 'Cooper-Climax' ORDER BY CAST(pos AS INTEGER) ASC LIMIT 1;,jo bonnier,wrong_value,,,
+nt-8912,which region has more than one format?,united states,SELECT region FROM t GROUP BY region HAVING COUNT(DISTINCT format) > 1;,the netherlands | united kingdom | united states | worldwide,wrong_number_of_values,,,
+nt-9259,how many years was it before the first partly free status?,18,SELECT MIN(year) - (SELECT MIN(year) FROM t) FROM t WHERE status = 'Partly Free';,19,wrong_value,,,
+nt-1336,who finished after claudia poll?,vanessa garcía,SELECT swimmer FROM t WHERE CAST(rank AS INTEGER) > (SELECT CAST(rank AS INTEGER) FROM t WHERE swimmer = 'Claudia Poll');,vanessa garcía | arlene semeco | heysi villarreal | maríana álvarado | carolina moreno | isabella tafur | ximena maria vilár | nikia hillarie | sharon fajardo | maria álvarez | alia atkinson | alexis jordan | sharntelle mclean | jennifer powell | nishani cicilson | sade daal | dalia tórrez,wrong_number_of_values,,,
+nt-1539,how do you say 'i love you' in afrikaans?,ek is lief vir jou.,SELECT afrikaans FROM t WHERE english LIKE '%I love you%';,ek is lief vir jou. less common: ek het jou lief.,wrong_value,,,
+nt-6985,"other than mauna kea, name a place in hawaii.",makalawena marsh,SELECT name FROM t WHERE LOWER(name) != 'mauna kea' LIMIT 1;,diamond head,wrong_value,,,
+nt-5889,"who was eliminated first, nikki dinki or viet pham?",viet pham,"SELECT name FROM t WHERE name IN ('Nikki Dinki', 'Viet Pham') ORDER BY 
+CASE eliminated 
+    when 'First' then 1 
+    when 'Second' then 2 
+    when 'Third' then 3 
+    when 'Fourth' then 4 
+    when 'Fifth' then 5 
+    when 'Sixth' then 6 
+    when 'Seventh' then 7 
+    when 'Eighth' then 8 
+    when 'Ninth' then 9 
+    when 'Tenth' then 10 
+    else 11 
+END ASC LIMIT 1;",nikki dinki,wrong_value,,,
+nt-11721,which province consumes the least amount of spirits?,quebec,SELECT unnamed_0 FROM t ORDER BY CAST(spirits AS REAL) ASC LIMIT 1,nunavut,wrong_value,,,
+nt-683,what is the total of deaths in internment camps and during the wartime flight?,173805,SELECT total FROM t WHERE description = 'Deaths in internment camps & during wartime flight',,empty_result,,,
+nt-1636,which country had the highest number of medals?,russia,SELECT nation FROM t ORDER BY total DESC LIMIT 1,total,wrong_value,,,
+nt-5737,how long was woof the dog sold before it was retired?,4 years,SELECT retired - introduced FROM t WHERE name = 'Woof' AND animal_type = 'Dog',4,wrong_value,,,
+nt-657,how long was the teams longest losing streak?,5 games,"WITH streaks AS (
+    SELECT 
+        results_score,
+        SUM(CASE WHEN results_score LIKE 'L%' THEN 0 ELSE 1 END) OVER (ORDER BY game) AS grp
+    FROM t
+),
+losing_streaks AS (
+    SELECT COUNT(*) AS streak_length
+    FROM streaks
+    WHERE results_score LIKE 'L%'
+    GROUP BY grp
+)
+SELECT MAX(streak_length) FROM losing_streaks;",5,wrong_value,,,
+nt-11390,what was the next most commonly spoken language in poland after russian?,german,"SELECT language FROM t WHERE language != 'Russian' ORDER BY CAST(REPLACE(number, ' ', '') AS INTEGER) DESC LIMIT 1",total,wrong_value,,,
+nt-5096,what swara is above shatshruti dhaivata?,shuddha nishada,SELECT swara FROM t WHERE position = (SELECT position + 1 FROM t WHERE short_name = 'D3' OR swara LIKE '%Shatshruti Dhaivata%' OR swara LIKE '%Shatsruti Dhaivata%' OR swara LIKE '%shatshruti dhaivata%');,kakali nishada,wrong_value,,,
+nt-3275,what was the first marathon juma ikangaa won?,1982 african championships,SELECT year FROM t WHERE position = '1st' AND event = 'Marathon' ORDER BY year ASC LIMIT 1,1982,wrong_value,,,
+nt-5145,what party is listed previous to the new renaissance party?,new party daichi - true democrats,SELECT party FROM t WHERE rowid = (SELECT rowid FROM t WHERE party LIKE '%New Renaissance Party%' - 1);,,empty_result,,,
+nt-13934,which countries won at least 3 silver medals?,united states,SELECT nation FROM t WHERE silver >= 3;,united states | total,wrong_number_of_values,,,
+nt-10056,"on game days, which line do you want to use?",s castro shuttle,SELECT line FROM t WHERE termini_1 LIKE '%Zoo%' OR termini LIKE '%Zoo%';,l taraval,wrong_value,,,
+nt-12495,what was the number of cars built by american car company?,4,SELECT number FROM t WHERE builder = 'American Car Company';,51 | 53 | 55 | 57,wrong_number_of_values,,,
+nt-4585,how many mills were built or first mentioned after 1800?,8,SELECT count(*) FROM t WHERE CAST(first_mention_or_built AS INTEGER) > 1800;,6,wrong_value,,,
+nt-10176,which players only scored one goal?,serginho greene | yordan miliev | ivo ivanov,SELECT player FROM t WHERE total = 1;,yordan miliev | ivo ivanov,wrong_number_of_values,,,
+nt-14080,when did the first solar saros with a magnitude of greater than 1.00 occur?,"march 5, 2668",SELECT date FROM t WHERE mag > 1.00 ORDER BY date ASC LIMIT 1;,"april 18, 2740",wrong_value,,,
+nt-3878,what is the total number of suture materials that have a mono-filament structure?,3,"SELECT sum(
+  CASE WHEN plain_catgut LIKE '%mono-filament%' OR plain_catgut LIKE '%monofilament%' THEN 1 ELSE 0 END +
+  CASE WHEN chromic_catgut LIKE '%mono-filament%' OR chromic_catgut LIKE '%monofilament%' THEN 1 ELSE 0 END +
+  CASE WHEN polyglycolide_p_g_a LIKE '%mono-filament%' OR polyglycolide_p_g_a LIKE '%monofilament%' THEN 1 ELSE 0 END +
+  CASE WHEN polydioxanone_pds LIKE '%mono-filament%' OR polydioxanone_pds LIKE '%monofilament%' THEN 1 ELSE 0 END
+) FROM t",6,wrong_value,,,

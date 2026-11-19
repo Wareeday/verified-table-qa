@@ -1,0 +1,14 @@
+{
+  "dataset": "wikitq",
+  "n": 100,
+  "seed": 7,
+  "backend": "openai",
+  "model": "gemini-3.5-flash-lite",
+  "k": 3,
+  "tau": 0.66,
+  "skip_direct": true,
+  "no_samples": false,
+  "version": "0.1.0",
+  "python": "3.14.10",
+  "started": "2026-11-18 16:07:02"
+}
