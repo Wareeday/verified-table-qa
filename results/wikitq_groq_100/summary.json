@@ -1,0 +1,74 @@
+{
+  "n": 100,
+  "tau": 0.66,
+  "single": [
+    0.63,
+    0.5397500000000001,
+    0.72
+  ],
+  "vote": [
+    0.64,
+    0.55,
+    0.73
+  ],
+  "diff_vote_minus_single": [
+    0.01,
+    -0.02,
+    0.04
+  ],
+  "selective_acc": [
+    0.7439024390243902,
+    0.6505873493975903,
+    0.8313286855286314
+  ],
+  "coverage": [
+    0.82,
+    0.74,
+    0.89
+  ],
+  "rejected_acc": 0.16666666666666666,
+  "auroc": [
+    0.7395833333333334,
+    0.6424020890090945,
+    0.8330894390055608
+  ],
+  "curve": [
+    {
+      "tau": 1.0,
+      "coverage": 0.69,
+      "accuracy": 0.782608695652174
+    },
+    {
+      "tau": 0.6667,
+      "coverage": 0.82,
+      "accuracy": 0.7439024390243902
+    },
+    {
+      "tau": 0.5,
+      "coverage": 0.85,
+      "accuracy": 0.7411764705882353
+    },
+    {
+      "tau": 0.3333,
+      "coverage": 0.94,
+      "accuracy": 0.6808510638297872
+    },
+    {
+      "tau": 0.0,
+      "coverage": 1.0,
+      "accuracy": 0.64
+    }
+  ],
+  "difficulty": {},
+  "failure_labels": {
+    "empty_result": 8,
+    "wrong_value": 19,
+    "no_sql_found": 3,
+    "wrong_number_of_values": 5,
+    "syntax_error": 2
+  },
+  "flag_counts": {
+    "no_valid_query": 6,
+    "type_mismatch": 3
+  }
+}
