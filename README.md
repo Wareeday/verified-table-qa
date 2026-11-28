@@ -143,7 +143,7 @@ Rebuild a report (for example with another threshold): `python -m vtqa.report re
 run.py                   command-line entry point
 vtqa/                    prompts, LLM client, SQL sandbox, verifier, scoring, statistics, report, loaders
 tests/test_all.py        offline tests
-docs/EXPERIMENT_PLAN.md  hypotheses and settings
+docs/                    Verified Table QA.pdf
 results/                 mini_groq, wikitq_groq, wikitq_gemini, run1 (partial)
 ```
 
@@ -159,7 +159,7 @@ Found during a review of the code and results; none of them has been fixed yet.
 - [ ] **More tolerant answer matching** (stray backslashes, units such as "4 years"), reported next to the strict score.
 - [ ] **Record time and tokens** (`finished`, seconds per question, token counts) in `meta.json`.
 - [ ] Fill in `failures_to_audit.csv` by hand (`your_label`) and complete `docs/EXPERIMENT_PLAN.md`.
-- [ ] Packaging: `pyproject.toml` requires Python >= 3.14, but the code runs on older versions; remove the stub `src/verified_table_qa` or package `vtqa` properly.
+- [ ] Packaging: `pyproject.toml` requires Python >= 3.10, but the code runs on older versions; remove the stub `src/verified_table_qa` or package `vtqa` properly.
 - [ ] `results/run1` is an interrupted run (22 questions, no report); rename it or remove it.
 
 ## Limitations
@@ -168,7 +168,7 @@ Answers are compared as sets after simple normalisation. WikiTQ is public and fi
 
 ## Technical report
 
-A full report (method, setup, tables, error analysis, references) is in `docs/technical_report.tex`.
+A full report (method, setup, tables, error analysis, references) is in `docs`.
 
 ## References
 

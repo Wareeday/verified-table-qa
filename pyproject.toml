@@ -1,19 +1,31 @@
 [project]
 name = "verified-table-qa"
 version = "0.1.0"
-description = "Add your description here"
+description = "Verified answers for table questions: a retriever proposes evidence, a verifier checks it, and the answer is only accepted when the evidence supports it"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Warda Masood" }]
 dependencies = [
     "matplotlib>=3.7",
     "numpy>=1.24",
     "pandas>=2.0",
     "requests>=2.31",
+    "scikit-learn>=1.4",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "ruff"]
 
 [project.scripts]
 verified-table-qa = "verified_table_qa:main"
 
 [build-system]
-requires = ["uv_build>=0.13.7,<0.14.0"]
-build-backend = "uv_build"
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["verified_table_qa"]
+
+[tool.ruff]
+line-length = 120
